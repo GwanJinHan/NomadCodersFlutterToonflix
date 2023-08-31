@@ -14,7 +14,6 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   bool isRunning = false;
-  bool isResting = false;
   int currentTime = 25;
   late int totalSeconds = currentTime * 60;
   late int minute = totalSeconds ~/ 60;
@@ -39,57 +38,35 @@ class _AppState extends State<App> {
   }
 
   void onTick(Timer timer) {
-    if (totalSeconds == 0 && !isResting) {
-      setState(() {
-        isRunning = false;
-        timer.cancel();
-
+    setState(() {
+      if (totalSeconds == 0 && cycle == 4) {
+        cycle = 0;
+        rounds += 1;
+        totalSeconds = 5 * 60;
+      } else if (totalSeconds == 0) {
         cycle += 1;
-        if (cycle == 4) {
-          cycle = 0;
-          rounds += 1;
-          isResting = true;
-          totalSeconds = 5 * 60;
-          minute = totalSeconds ~/ 60;
-          seconds = totalSeconds % 60 < 10
-              ? (totalSeconds % 60).toString().padLeft(2, '0')
-              : (totalSeconds % 60).toString();
-        }
-      });
-    } else if (totalSeconds == 0 && isResting) {
-      setState(() {
-        isResting = false;
         timer.cancel();
-      });
-    } else {
-      if (isRunning) {
-        setState(() {
+        isRunning = false;
+        totalSeconds = currentTime * 60;
+      } else {
+        if (isRunning) {
           totalSeconds -= 1;
-        });
+        }
       }
-    }
+      minute = totalSeconds ~/ 60;
+      seconds = totalSeconds % 60 < 10
+          ? (totalSeconds % 60).toString().padLeft(2, '0')
+          : (totalSeconds % 60).toString();
+    });
   }
 
   void onPlayButtonPressed() {
     setState(
       () {
+        isRunning = true;
         timer = Timer.periodic(
           const Duration(seconds: 1),
-          (timer) {
-            setState(
-              () {
-                isRunning = true;
-                totalSeconds = totalSeconds - 1;
-                minute = totalSeconds ~/ 60;
-                seconds = totalSeconds % 60 < 10
-                    ? (totalSeconds % 60).toString().padLeft(2, '0')
-                    : (totalSeconds % 60).toString();
-                if (totalSeconds <= 0) {
-                  timer.cancel();
-                }
-              },
-            );
-          },
+          onTick,
         );
       },
     );
